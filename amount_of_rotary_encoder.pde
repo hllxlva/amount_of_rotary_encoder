@@ -3,15 +3,16 @@ int n = 10;
 float easing = 0.05;
 float x = 1450, y = 625,vx ,vy;
 float theta, omega;
-float[][] C = {{100, 0}, 
+float[][] C = {{100, 0}, //Censerの位置
                {0, 100}, 
                {-100, 0},
                {0, -100},
                {100, 0}};
-float[][] Cr = new float[5][2];
-float[][] Vd = new float[5][2];
-float[][] k  = new float[5][2];
-float[] now_p = new float[2];
+float[][] Cr = new float[5][2];//Censerの極座標表示[0] = x,[1] = y
+float[][] Vd = new float[5][2];//rotary_encoderの読み取れる方向ベクトルとその他の値
+float[][] k  = new float[5][2];//(係数)
+float[] now_v = new float[2];//now velocity
+float[] now_ang_v = new float[2];//now angular velocity
 void setup() {
   size(2500, 1250);
   background(0);
@@ -99,23 +100,29 @@ void draw() {
   //Vd3 = Vd[2][0]
   //Vd4 = Vd[3][0]
   
+  //瞬間中心から求める
   for (int i = 0; i < 4; i++) {
      for (int j = 0; j < 2; j++) {
-       k[i][j] = (Vd[i][0]*C[i+1][j]/Cr[i+1][0]-Vd[i+1][0]*C[i][j]/Cr[i][0]);
+       k[i][j] = (Vd[i][0]*C[i+1][j]/Cr[i+1][0]-Vd[i+1][0]*C[i][j]/Cr[i][0]);//係数計算
      }
   }
   for (int i = 0; i < 2; i++) {
      k[4][i] = k[0][i];
   }
   for (int i = 0; i < 2; i++) {
-     now_p[i] = (k[1][1-i]*(Vd[0][0]*Cr[1][0]-Vd[1][0]*Cr[0][0])-k[0][1-i]*(Vd[1][0]*Cr[2][0]-Vd[2][0]*Cr[1][0]))/(k[0][i]*k[1][1-i]-k[1][i]*k[0][1-i]);
+     now_v[i] = (k[1][1-i]*(Vd[0][0]*Cr[1][0]-Vd[1][0]*Cr[0][0])-k[0][1-i]*(Vd[1][0]*Cr[2][0]-Vd[2][0]*Cr[1][0]))/(k[0][i]*k[1][1-i]-k[1][i]*k[0][1-i]);//now_velocity[]の中はx, y を表す
   }
+  now_ang_v[0] = Cr[0][0]*Vd[0][0]/(now_v[1]*C[0][1]+now_v[0]*C[0][0]-Cr[0][0]*C[0][0]);//右クリックが＋
+  
   translate(x, y);
   rotate(theta*PI/180);
+  //瞬間中心の線
   stroke(0,0,255);
   strokeWeight(3);
-  //瞬間中心の線
-  line(0,0,now_p[0],-now_p[1]);//ここのy軸に-がついているのは縦軸が下向いているためである
+  line(0,0,now_v[0],-now_v[1]);//ここのy軸に-がついているのは縦軸が下向いているためである
+  //角速度の線
+  stroke(200);
+  line(0,0,now_ang_v[0]*1000,0);
   stroke(0);
   strokeWeight(0);
   rotate(-theta*PI/180);
