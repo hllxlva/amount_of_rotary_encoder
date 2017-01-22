@@ -2,7 +2,7 @@ boolean L, R;
 int n = 10;
 float easing = 0.05;
 float x = 1450, y = 625,vx ,vy;
-float theta, omega;
+float theta, omega = 0;
 float[][] C = {{100, 0}, //Censerの位置
                {0, 100}, 
                {-100, 0},
@@ -29,13 +29,14 @@ void draw() {
   //計算------------------
   float targetX = mouseX;
   float targetY = mouseY;
-  x = x + (targetX - x) * easing; //差の0.05分だけ近づく
-  y = y + (targetY - y) * easing;
   vx = (targetX - x) * easing;
   vy = (targetY - y) * easing;
+  x = x + (targetX - x) * easing; //差の0.05分だけ近づく
+  y = y + (targetY - y) * easing;
+
   for (int i = 0; i < 4; i++) {//各センサー部分
-    Vd[i][0] = n*vx*sin(Cr[i][1]-theta*PI/180)+n*vy*cos(Cr[i][1]-theta*PI/180)+n*omega;
-    Vd[i][1] = n*vx*cos(Cr[i][1]-theta*PI/180)-n*vy*sin(Cr[i][1]-theta*PI/180);
+    Vd[i][0] = vx*sin(Cr[i][1]-theta*PI/180)+vy*cos(Cr[i][1]-theta*PI/180)+Cr[i][0]*omega*PI/180;
+    Vd[i][1] = vx*cos(Cr[i][1]-theta*PI/180)-vy*sin(Cr[i][1]-theta*PI/180);
   }
   for (int i = 0; i < 2; i++) {
      Vd[4][i] = Vd[0][i];
@@ -46,11 +47,11 @@ void draw() {
   if(L && R){
     omega = 0;
   }else if(L){
-    theta += 1;//↓
-    omega = 1;///↑は等しく
+    theta += 10;//↓°
+    omega = 10;///↑は等しく
   }else if(R){
-    theta -= 1;
-    omega = -1;
+    theta -= 10;
+    omega = -10;
   }else{
     omega = 0;
   }
@@ -60,7 +61,8 @@ void draw() {
   fill(150);
   translate(x,y);//ロボットの中心を(0, 0)に
   rotate(theta*PI/180);//ロボットの回転数分回転
-  ellipse(0, 0, 50, 50);//中心点
+  ellipse(0, 0, 
+  50, 50);//中心点
   for (int i = 0; i < 4; i++) {//各センサー部分
     rotate(-Cr[i][1]);//センサーの位置に
     translate(Cr[i][0],0);//移動する
@@ -68,7 +70,7 @@ void draw() {
     //rotate(Cr[i][1]-theta*PI/180);//センサーの値(速さ)を描画
     stroke(0,255,0);
     strokeWeight(3);
-    line(0,0,0,Vd[i][0]);
+    line(0,0,0,n*Vd[i][0]);
     stroke(0);
     strokeWeight(0);
     //rotate(theta*PI/180-Cr[i][1]);
@@ -112,7 +114,7 @@ void draw() {
   for (int i = 0; i < 2; i++) {
      now_v[i] = (k[1][1-i]*(Vd[0][0]*Cr[1][0]-Vd[1][0]*Cr[0][0])-k[0][1-i]*(Vd[1][0]*Cr[2][0]-Vd[2][0]*Cr[1][0]))/(k[0][i]*k[1][1-i]-k[1][i]*k[0][1-i]);//now_velocity[]の中はx, y を表す
   }
-  now_ang_v[0] = Cr[0][0]*Vd[0][0]/(now_v[1]*C[0][1]+now_v[0]*C[0][0]-Cr[0][0]*C[0][0]);//右クリックが＋
+  now_ang_v[0] = Cr[0][0]*Vd[0][0]/(now_v[1]*C[0][1]+now_v[0]*C[0][0]-Cr[0][0]*C[0][0]);//右クリックが＋ [rad/s]
   
   translate(x, y);
   rotate(theta*PI/180);
@@ -122,7 +124,7 @@ void draw() {
   line(0,0,now_v[0],-now_v[1]);//ここのy軸に-がついているのは縦軸が下向いているためである
   //角速度の線
   stroke(200);
-  line(0,0,now_ang_v[0]*1000,0);
+  line(0,0,now_ang_v[0]*180/PI*n,0);
   stroke(0);
   strokeWeight(0);
   rotate(-theta*PI/180);
